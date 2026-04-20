@@ -1,0 +1,21 @@
+name = "ustock"
+main = "src/index.ts"
+compatibility_date = "2025-04-15"
+
+[vars]
+ALPHA_VANTAGE_API_KEY = "WTG1IWNAZ6OWHUDT"
+NEWS_API_KEY = "80a54f1e7c8149c3b821827d22d7c814"
+TWELVEDATA_API_KEY = "8b3569c9baa14665b0ca2cf04d674194"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stock-db"
+database_id = "3f845a84-a8e0-4d2b-885e-066804d4b950"
+
+[[kv_namespaces]]
+binding = "STOCK_DB"
+id = "1a59aceb90f84e6c9e9c910fd8ef287d"
+
+[triggers]
+crons = [ "0 6 * * 1-5" ]
+

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>美股跟踪系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b1220;color:#fff;padding:24px;font-family:system-ui}
+.container{max-width:1200px;margin:0 auto}
+.title{font-size:30px;margin-bottom:24px;color:#00d1ff}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:10px 16px;background:#1a243a;border-radius:10px;cursor:pointer}
+.tab.active{background:#00d1ff;color:#000}
+.stock-list{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
+.stock{padding:10px 14px;background:#1e293b;border-radius:10px;cursor:pointer}
+.stock.active{background:#ff4444}
+.chart-box{background:#0f172a;border-radius:16px;padding:24px}
+canvas{height:600px !important}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="title">📈 美股智能跟踪系统</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="stock-list" id="list"></div>
+  <div class="chart-box"><canvas id="chart"></canvas></div>
+</div>
+
+<script>
+const groups = {
+"AI硬件":["NVDA","AMD","TSM","ASML","MU","MRVL","ON","SWKS","AMAT","LRCX"],
+"AI大模型":["MSFT","GOOGL","META","AMZN","PLTR","AI","ROKU","SMCI"],
+"新能源":["TSLA","NIO","XPEV","LI","RIVN","LCID","ENPH","SEDG","FSLR"],
+"光通信":["CLS","AAOI","FTNT","CIEN","JNPR"],
+"消费":["SBUX","MCD","NKE","DIS","PEP","KO","WMT","TGT","HD"],
+"半导体":["INTC","QCOM","AVGO","TXN","KLAC","AMAT"]
+};
+
+let chart = null;
+const API = '/';
+
+function renderTabs() {
+  const t = document.getElementById('tabs');
+  Object.keys(groups).forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'tab';
+    div.innerText = g;
+    div.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      div.classList.add('active');
+      renderList(g);
+    };
+    t.appendChild(div);
+  });
+  document.querySelector('.tab')?.click();
+}
+
+function renderList(g) {
+  const el = document.getElementById('list');
+  el.innerHTML = '';
+  groups[g].forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'stock';
+    d.innerText = s;
+    d.onclick = () => load(s);
+    el.appendChild(d);
+  });
+}
+
+async function load(sym) {
+  const res = await fetch(API + '?symbol=' + sym);
+  const data = await res.json();
+
+  const datasets = [
+    {
+      label: sym + ' 收盘价',
+      data: data.dates.map((d, i) => ({ x: d, y: data.closes[i] })),
+      borderColor: '#00d1ff',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: true,
+      backgroundColor: 'rgba(0,209,255,0.1)'
+    },
+    {
+      type: 'scatter',
+      label: '买入',
+      data: data.buyPoints.map(d => ({ x: d, y: data.closes[data.dates.indexOf(d)] })),
+      backgroundColor: 'red',
+      pointStyle: 'triangle',
+      rotation: 180,
+      radius: 8
+    },
+    {
+      type: 'scatter',
+      label: '卖出',
+      data: data.sellPoints.map(d => ({ x: d, y: data.closes[data.dates.indexOf(d)] })),
+      backgroundColor: '#22cc88',
+      pointStyle: 'triangle',
+      rotation: 0,
+      radius: 8
+    }
+  ];
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('chart'), {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#fff' } } },
+      scales: {
+        x: { type: 'time', time: { unit: 'day' }, grid: { color: '#2a3547' } },
+        y: { grid: { color: '#2a3547' } }
+      }
+    }
+  });
+}
+
+renderTabs();
+load('NVDA');
+</script>
+</body>
+</html>
