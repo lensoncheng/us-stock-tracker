@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>美股智能跟踪系统 — AI驱动的美股买卖信号分析平台</title>
+<meta name="description" content="实时追踪特斯拉(TSLA)、英伟达(NVDA)、苹果(AAPL)等美股买卖信号，基于MA、RSI、MACD、布林带、KDJ、OBV、ADX八大策略智能分析，覆盖AI硬件、新能源、半导体、数据中心等热门板块。">
+<meta name="keywords" content="美股分析,美股买卖信号,TSLA,NVDA,AAPL,GOOGL,美股追踪,MA策略,RSI策略,MACD,布林带,KDJ,OBV,ADX,新能源股票,AI股票,半导体股票">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://ustock.pages.dev/">
+
+<meta property="og:title" content="美股智能跟踪系统 — AI驱动买卖信号分析">
+<meta property="og:description" content="实时追踪TSLA、NVDA、AAPL等热门美股，MA/RSI/MACD/BOLL/KDJ/OBV/ADX八大策略信号，覆盖60+只股票。">
+<meta property="og:url" content="https://ustock.pages.dev/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_CN">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "美股智能跟踪系统",
+  "url": "https://ustock.pages.dev/",
+  "description": "AI驱动的美股买卖信号分析平台，覆盖特斯拉、英伟达、苹果等60余只热门美股，提供MA、RSI、MACD、布林带、KDJ、OBV、ADX策略信号。",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "zh-CN",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "CNY"}
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b1220;color:#fff;padding:24px;font-family:system-ui}
+.container{max-width:1200px;margin:0 auto}
+.title{font-size:30px;margin-bottom:24px;color:#00d1ff}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:10px 16px;background:#1a243a;border-radius:10px;cursor:pointer;transition:0.2s}
+.tab.active{background:#00d1ff;color:#000}
+.stock-list{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.stock{padding:10px 14px;background:#1e293b;border-radius:10px;cursor:pointer;transition:0.2s}
+.stock.active{background:#00d1ff;color:#000;font-weight:600}
+.info-box{background:#0f172a;border-radius:16px;padding:20px 24px;margin-bottom:20px}
+.chart-box{background:#0f172a;border-radius:16px;padding:24px;margin-bottom:20px}
+canvas{height:600px !important}
+.trend-box{padding:10px 16px;border-radius:10px;margin-bottom:20px;font-weight:600}
+.trend-up{background:#115641;color:#fff}
+.trend-down{background:#6d1c1c;color:#fff}
+.trend-neutral{background:#7d5a0c;color:#fff}
+.signal-box{background:#0f172a;border-radius:16px;padding:24px;max-height:380px;overflow-y:auto}
+.strategy-MA{color:#00cc66}
+.strategy-RSI{color:#3399ff}
+.strategy-MACD{color:#cc66ff}
+.strategy-BOLL{color:#ff9933}
+.strategy-Divergence{color:#ff6699}
+.strategy-KDJ{color:#ffcc00}
+.strategy-OBV{color:#00cccc}
+.strategy-ADX{color:#99cc33}
+.strategy-Combo{color:#ff3366;font-weight:700}
+.signal-action-buy{color:#ff4444}
+.signal-action-sell{color:#22cc88}
+.combo-tag{background:#ff3366;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-left:6px;font-weight:700}
+.contact-box{background:#0f172a;border-radius:16px;padding:18px 24px;text-align:center;font-size:15px;color:#ccc;margin-top:10px}
+.contact-box a{color:#00d1ff;text-decoration:none;font-weight:600}
+.seo-section{background:#0f172a;border-radius:16px;padding:28px 32px;margin-top:16px;line-height:1.8;color:#b0bec5}
+.seo-section h2{color:#00d1ff;font-size:20px;margin-bottom:12px}
+.seo-section h3{color:#7ecfff;font-size:16px;margin:16px 0 8px}
+.seo-section h4{color:#aaa;font-size:13px;margin:10px 0 6px}
+.seo-section p{margin-bottom:10px;font-size:14px}
+.seo-stock-grid{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.seo-stock-tag{background:#1a243a;border-radius:8px;padding:4px 10px;font-size:13px;color:#7ecfff}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1 class="title">📈 美股智能跟踪系统</h1>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="stock-list" id="list"></div>
+  <div id="trendBox" class="trend-box">加载趋势...</div>
+  <div class="info-box">
+    <h3 id="stockName">标的信息</h3>
+    <p id="stockIndex" style="margin:6px 0"></p>
+  </div>
+  <div class="chart-box"><canvas id="chart"></canvas></div>
+  <div class="signal-box">
+    <h3>策略买卖信号 <span style="font-size:13px;color:#aaa;font-weight:400">⭐ Combo = 多策略共振高置信度信号</span></h3>
+    <div id="signalList" style="margin-top:16px"></div>
+  </div>
+  <div class="contact-box">
+    如有问题 &nbsp;|&nbsp; 请联系：<a href="mailto:327124676@qq.com">327124676@qq.com</a>
+  </div>
+
+  <section class="seo-section" aria-label="平台介绍">
+    <h2>关于美股智能跟踪系统</h2>
+    <p>本平台是面向中文投资者的免费美股技术分析工具，实时追踪超过60只热门美股的买卖信号，覆盖七姐妹、AI硬件、新能源汽车、半导体、光通信、消费、存储、电力（核电）、数据中心等板块。</p>
+    <p>系统基于 <strong>MA均线</strong>、<strong>RSI相对强弱指标</strong>、<strong>MACD</strong>、<strong>BOLL布林带</strong>、<strong>KDJ随机指标</strong>、<strong>OBV能量潮</strong>、<strong>ADX趋向指标</strong> 七大策略，并通过 <strong>Combo多策略共振</strong> 筛选高置信度信号，帮助投资者做出更理性的交易决策。</p>
+
+    <h3>覆盖股票列表</h3>
+
+    <h4>🔥 七姐妹</h4>
+    <div class="seo-stock-grid">
+      <span class="seo-stock-tag">TSLA 特斯拉</span><span class="seo-stock-tag">NVDA 英伟达</span>
+      <span class="seo-stock-tag">AAPL 苹果</span><span class="seo-stock-tag">GOOGL 谷歌</span>
+      <span class="seo-stock-tag">MSFT 微软</span><span class="seo-stock-tag">AMZN 亚马逊</span>
+      <span class="seo-stock-tag">META 元宇宙平台</span>
+    </div>
+
+    <h4>🤖 AI硬件</h4>
+    <div class="seo-stock-grid">
+      <span class="seo-stock-tag">NVDA 英伟达</span><span class="seo-stock-tag">AMD 超威半导体</span>
+      <span class="seo-stock-tag">TSM 台积电</span><span class="seo-stock-tag">ASML 阿斯麦</span>
+      <span class="seo-stock-tag">MU 美光科技</span><span class="seo-stock-tag">AMAT 应用材料</span>
+      <span class="seo-stock-tag">LRCX 泛林半导体</span>
+    </div>
+
+    <h4>⚡ 新能源</h4>
+    <div class="seo-stock-grid">
+      <span class="seo-stock-tag">TSLA 特斯拉</span><span class="seo-stock-tag">NIO 蔚来</span>
+      <span class="seo-stock-tag">XPEV 小鹏汽车</span><span class="seo-stock-tag">LI 理想汽车</span>
+      <span class="seo-stock-tag">RIVN Rivian</span><span class="seo-stock-tag">ENPH Enphase能源</span>
+      <span class="seo-stock-tag">FSLR 第一太阳能</span>
+    </div>
+
+    <h4>💾 半导体 / 存储</h4>
+    <div class="seo-stock-grid">
+      <span class="seo-stock-tag">INTC 英特尔</span><span class="seo-stock-tag">QCOM 高通</span>
+      <span class="seo-stock-tag">AVGO 博通</span><span class="seo-stock-tag">TXN 德州仪器</span>
+      <span class="seo-stock-tag">SNDK 闪迪</span><span class="seo-stock-tag">WDC 西部数据</span>
+      <span class="seo-stock-tag">STX 希捷科技</span>
+    </div>
+
+    <h4>☢️ 电力（核电）</h4>
+    <div class="seo-stock-grid">
+      <span class="seo-stock-tag">CEG 星座能源</span><span class="seo-stock-tag">VST 维斯塔能源</span>
+      <span class="seo-stock-tag">OKLO Oklo核电</span><span class="seo-stock-tag">BWXT BWX核电技术</span>
+      <span class="seo-stock-tag">NEE 新纪元能源</span>
+    </div>
+
+    <h4>🏢 数据中心</h4>
+    <div class="seo-stock-grid">
+      <span class="seo-stock-tag">EQIX Equinix</span><span class="seo-stock-tag">DLR Digital Realty</span>
+      <span class="seo-stock-tag">ORCL 甲骨文</span><span class="seo-stock-tag">NBIS Nebius</span>
+    </div>
+
+    <h3>七大策略说明</h3>
+    <p><strong>MA均线策略：</strong>短期均线与长期均线金叉买入、死叉卖出，适合趋势行情。</p>
+    <p><strong>RSI相对强弱指标：</strong>低于30为超卖（潜在买点），高于70为超买（潜在卖点）。</p>
+    <p><strong>MACD指标：</strong>DIF与DEA交叉及柱状图变化判断买卖时机。</p>
+    <p><strong>BOLL布林带：</strong>价格触碰下轨买入，触碰上轨卖出，适合震荡行情。</p>
+    <p><strong>KDJ随机指标：</strong>K线在超卖区上穿D线买入，在超买区下穿D线卖出，短线灵敏度高于RSI。</p>
+    <p><strong>OBV能量潮：</strong>量价背离预警——价格新低但OBV未新低为底背离买点，价格新高但OBV未新高为顶背离卖点。</p>
+    <p><strong>ADX趋向指标：</strong>+DI上穿-DI且ADX>20为趋势形成买点，-DI上穿+DI且ADX>20为趋势反转卖点。</p>
+    <p><strong>⭐ Combo共振：</strong>同一天≥2个策略同向信号，为高置信度买卖点。</p>
+  </section>
+
+</div>
+
+<script>
+const API_BASE_URL = "https://ustock.chengchenglonglong.workers.dev";
+
+const STRATEGY_KEYS = ["Combo","MA","RSI","MACD","BOLL","Divergence","KDJ","OBV","ADX"];
+const STRATEGY_COLORS = {
+  MA:"#00cc66",RSI:"#3399ff",MACD:"#cc66ff",BOLL:"#ff9933",
+  Divergence:"#ff6699",KDJ:"#ffcc00",OBV:"#00cccc",ADX:"#99cc33",
+  Combo:"#ff3366"
+};
+
+const groups = {
+"七姐妹":["TSLA","NVDA","AAPL","GOOGL","MSFT","AMZN","META"],
+"AI硬件":["NVDA","AMD","TSM","ASML","MU","MRVL","ON","SWKS","AMAT","LRCX"],
+"AI大模型":["MSFT","GOOGL","META","AMZN","PLTR","AI","ROKU","SMCI"],
+"新能源":["TSLA","NIO","XPEV","LI","RIVN","LCID","ENPH","SEDG","FSLR"],
+"光通信":["CLS","AAOI","FTNT","CIEN"],
+"消费":["SBUX","MCD","NKE","DIS","PEP","KO","WMT","TGT","HD"],
+"半导体":["INTC","QCOM","AVGO","TXN","KLAC","AMAT","MU"],
+"存储":["SNDK","WDC","STX","NTAP"],
+"电力(核电)":["CEG","VST","NEE","SO","DUK","AEP","EXC","OKLO","BWXT","SMR"],
+"数据中心":["EQIX","DLR","IRM","APLD","NBIS","ORCL"]
+};
+
+const stockMeta = {
+NVDA:{name:"英伟达",index:"纳斯达克100、标普500"},AMD:{name:"超威半导体",index:"纳斯达克100、标普500"},
+TSM:{name:"台积电",index:"标普500、纳斯达克"},ASML:{name:"阿斯麦",index:"纳斯达克"},
+MU:{name:"美光科技",index:"标普500"},MRVL:{name:"美满电子",index:"纳斯达克"},
+ON:{name:"安森美半导体",index:"标普500"},SWKS:{name:"思佳讯",index:"纳斯达克"},
+AMAT:{name:"应用材料",index:"标普500"},LRCX:{name:"泛林半导体",index:"标普500"},
+MSFT:{name:"微软",index:"道琼斯、纳斯达克100、标普500"},GOOGL:{name:"谷歌A",index:"纳斯达克100、标普500"},
+META:{name:"元宇宙平台",index:"纳斯达克100、标普500"},AMZN:{name:"亚马逊",index:"纳斯达克100、标普500"},
+PLTR:{name:"帕兰提尔科技",index:"纽约证券交易所"},AI:{name:"C3.ai",index:"纽约证券交易所"},
+ROKU:{name:"乐叙电视",index:"纳斯达克"},SMCI:{name:"超微电脑",index:"纳斯达克"},
+TSLA:{name:"特斯拉",index:"纳斯达克100、标普500"},NIO:{name:"蔚来",index:"纽约证券交易所"},
+XPEV:{name:"小鹏汽车",index:"纽约证券交易所"},LI:{name:"理想汽车",index:"纳斯达克"},
+RIVN:{name:"Rivian Automotive",index:"纳斯达克"},LCID:{name:"Lucid集团",index:"纳斯达克"},
+ENPH:{name:"Enphase能源",index:"纳斯达克"},SEDG:{name:"阳光电源",index:"纳斯达克"},
+FSLR:{name:"第一太阳能",index:"纳斯达克"},CLS:{name:"科雷森",index:"纽约证券交易所"},
+AAOI:{name:"应用光电",index:"纳斯达克"},FTNT:{name:"飞塔信息",index:"纳斯达克"},
+CIEN:{name:"Ciena通讯",index:"纳斯达克"},JNPR:{name:"瞻博网络",index:"纳斯达克"},
+SBUX:{name:"星巴克",index:"标普500"},MCD:{name:"麦当劳",index:"道琼斯、标普500"},
+NKE:{name:"耐克",index:"标普500"},DIS:{name:"迪士尼",index:"道琼斯、标普500"},
+PEP:{name:"百事可乐",index:"标普500"},KO:{name:"可口可乐",index:"道琼斯、标普500"},
+WMT:{name:"沃尔玛",index:"道琼斯、标普500"},TGT:{name:"塔吉特",index:"标普500"},
+HD:{name:"家得宝",index:"道琼斯、标普500"},INTC:{name:"英特尔",index:"道琼斯、标普500"},
+QCOM:{name:"高通",index:"纳斯达克100、标普500"},AVGO:{name:"博通",index:"纳斯达克100、标普500"},
+TXN:{name:"德州仪器",index:"标普500"},KLAC:{name:"科磊半导体",index:"标普500"},
+SNDK:{name:"闪迪",index:"纳斯达克"},WDC:{name:"西部数据",index:"纳斯达克"},
+STX:{name:"希捷科技",index:"纳斯达克"},NTAP:{name:"网存",index:"纳斯达克"},
+CEG:{name:"星座能源",index:"纽约证交所"},VST:{name:"维斯塔能源",index:"纽约证交所"},
+NEE:{name:"新纪元能源",index:"标普500"},SO:{name:"南方电力",index:"标普500"},
+DUK:{name:"杜克能源",index:"标普500"},AEP:{name:"美国电力",index:"标普500"},
+EXC:{name:"爱克斯龙电力",index:"标普500"},OKLO:{name:"Oklo核电",index:"纳斯达克"},
+BWXT:{name:"BWX核电技术",index:"纽约证交所"},EQIX:{name:"Equinix数据中心",index:"纳斯达克100"},
+DLR:{name:"Digital Realty",index:"标普500"},IRM:{name:"Iron Mountain",index:"标普500"},
+APLD:{name:"Apollo Realty",index:"纽约证交所"},NBIS:{name:"Nebius",index:"纳斯达克"},
+ORCL:{name:"甲骨文",index:"标普500、纳斯达克100"}
+};
+
+let chart = null;
+let currentSymbol = null;
+
+function renderTabs() {
+  const t = document.getElementById('tabs');
+  for (let g in groups) {
+    const div = document.createElement('div');
+    div.className = 'tab';
+    div.innerText = g;
+    div.onclick = function() {
+      document.querySelectorAll('.tab').forEach(i=>i.classList.remove('active'));
+      div.classList.add('active');
+      renderList(g);
+    };
+    t.appendChild(div);
+  }
+  document.querySelector('.tab')?.click();
+}
+
+function renderList(g) {
+  const el = document.getElementById('list');
+  el.innerHTML = '';
+  groups[g].forEach(s => {
+    let d = document.createElement('div');
+    d.className = 'stock';
+    d.innerText = s;
+    d.onclick = function() { load(s); };
+    el.appendChild(d);
+  });
+}
+
+function setActiveStock(sym) {
+  document.querySelectorAll('.stock').forEach(el => {
+    el.classList.remove('active');
+    if (el.innerText === sym) el.classList.add('active');
+  });
+}
+
+async function load(sym) {
+  currentSymbol = sym;
+  setActiveStock(sym);
+  let meta = stockMeta[sym] || {name:sym, index:"未收录"};
+  document.getElementById('stockName').innerText = sym + " | " + meta.name;
+  document.getElementById('stockIndex').innerText = "收录指数：" + meta.index;
+  try {
+    const res = await fetch(`${API_BASE_URL}/api?symbol=${sym}`, {method:"GET", mode:"cors"});
+    const data = await res.json();
+    renderTrend(data.trend);
+    renderChart(sym, data);
+    renderSignals(data);
+  } catch(e) { console.error("加载失败", e); }
+}
+
+function renderTrend(trend) {
+  const el = document.getElementById("trendBox");
+  if (trend==="uptrend"){el.className="trend-box trend-up";el.innerText="📈 上涨趋势 — 只允许做多";}
+  else if(trend==="downtrend"){el.className="trend-box trend-down";el.innerText="📉 下跌趋势 — 只允许空仓/做空";}
+  else if(trend==="neutral"){el.className="trend-box trend-neutral";el.innerText="⚖️ 震荡趋势 — 高抛低吸";}
+  else{el.className="trend-box";el.innerText="趋势：未知";}
+}
+
+function renderChart(sym, data) {
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('chart').getContext('2d');
+  const prices = data.closes;
+  const minPrice = Math.min(...prices)*0.95;
+  const maxPrice = Math.max(...prices)*1.05;
+  const maxVol = Math.max(...data.volumes);
+  const volScale = maxPrice*0.1/maxVol||0.001;
+  const volColors = data.closes.map((c,i)=>i===0?"rgba(0,209,255,0.4)":c>=data.closes[i-1]?"rgba(255,60,60,0.7)":"rgba(0,210,130,0.7)");
+  const datasets = [
+    {label:sym+" 收盘价",data:data.dates.map((d,i)=>({x:d,y:data.closes[i]})),borderColor:"#00d1ff",borderWidth:2,pointRadius:0,fill:true,backgroundColor:"rgba(0,209,255,0.1)"},
+    {type:"bar",label:"成交量",data:data.dates.map((d,i)=>({x:d,y:data.volumes[i]*volScale})),backgroundColor:volColors,borderWidth:0,yAxisID:"volAxis"}
+  ];
+  STRATEGY_KEYS.forEach(k=>{
+    const s=(data.strategies||{})[k]; if(!s) return;
+    const color = STRATEGY_COLORS[k] || "#ffffff";
+    const isCombo = k === "Combo";
+    const radius = isCombo ? 10 : 7;
+    if(s.buy) datasets.push({type:"scatter",label:k+" 买入",data:s.buy.map(d=>{const i=data.dates.indexOf(d);return i===-1?null:{x:d,y:data.closes[i]};}).filter(Boolean),backgroundColor:color,pointStyle:"triangle",rotation:180,radius:radius,borderWidth:isCombo?2:0,borderColor:"#fff"});
+    if(s.sell) datasets.push({type:"scatter",label:k+" 卖出",data:s.sell.map(d=>{const i=data.dates.indexOf(d);return i===-1?null:{x:d,y:data.closes[i]};}).filter(Boolean),backgroundColor:color,pointStyle:"triangle",rotation:0,radius:radius,borderWidth:isCombo?2:0,borderColor:"#fff"});
+  });
+  chart = new Chart(ctx,{type:'line',data:{datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#fff"}}},scales:{x:{type:"time",time:{unit:"day"},grid:{color:"#2a3547"}},y:{grid:{color:"#2a3547"},beginAtZero:false,min:minPrice,max:maxPrice,ticks:{color:"#fff"}},volAxis:{position:"right",display:true,grid:{display:false},ticks:{callback:v=>Math.round(v/volScale),color:"#aaa"},title:{display:true,text:"成交量",color:"#ccc"}}}}});
+}
+
+function renderSignals(data) {
+  const root = document.getElementById("signalList");
+  root.innerHTML = "";
+  const all = [];
+  STRATEGY_KEYS.forEach(k=>{
+    const s=(data.strategies||{})[k]; if(!s) return;
+    (s.buy||[]).forEach(d=>all.push({date:d,type:"BUY",strategy:k}));
+    (s.sell||[]).forEach(d=>all.push({date:d,type:"SELL",strategy:k}));
+  });
+  if(!all.length){root.innerHTML="<div style='color:#aaa'>暂无信号</div>";return;}
+  all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const group={};
+  all.forEach(it=>{if(!group[it.date])group[it.date]=[];group[it.date].push(it);});
+  Object.keys(group).sort((a,b)=>new Date(b)-new Date(a)).forEach(date=>{
+    const dateRow=document.createElement("div");
+    dateRow.style.cssText="padding:8px 0;color:#aaa;border-bottom:1px solid #2a3547;";
+    dateRow.innerText=date; root.appendChild(dateRow);
+    group[date].sort((a,b)=>{
+      const order=STRATEGY_KEYS.indexOf(a.strategy)-STRATEGY_KEYS.indexOf(b.strategy);
+      if(order!==0) return order;
+      return a.type==="BUY"?-1:1;
+    }).forEach(it=>{
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2a3547;";
+      const comboTag = it.strategy==="Combo" ? '<span class="combo-tag">⭐</span>' : '';
+      row.innerHTML="<span style='font-weight:600' class='strategy-"+it.strategy+"'>【"+it.strategy+"】"+comboTag+"</span><span class='"+(it.type==="BUY"?"signal-action-buy":"signal-action-sell")+"'>"+(it.type==="BUY"?"买入 ▲":"卖出 ▼")+"</span>";
+      root.appendChild(row);
+    });
+  });
+}
+
+renderTabs();
+load('TSLA');
+</script>
+</body>
+</html>

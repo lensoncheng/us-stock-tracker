@@ -17,5 +17,8 @@ binding = "STOCK_DB"
 id = "1a59aceb90f84e6c9e9c910fd8ef287d"
 
 [triggers]
-crons = [ "0 6 * * 1-5" ]
+crons = ["*/15 13-21 * * 1-5"]
+
+[limits]
+d1_max_num_queries = 50
 

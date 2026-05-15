@@ -26,4 +26,27 @@ export class FileSystem {
       return [];
     }
   }
+
+  // 读取单个 key 的值
+  async get(key: string): Promise<string | null> {
+    return await this.kv.get(key);
+  }
+
+  // 写入单个 key 的值
+  async put(key: string, value: string): Promise<void> {
+    await this.kv.put(key, value);
+  }
+
+  // 读取单个 key 的值并转换为数字
+  async getNumber(key: string): Promise<number | null> {
+    const value = await this.kv.get(key);
+    if (value === null) return null;
+    const num = parseInt(value, 10);
+    return isNaN(num) ? null : num;
+  }
+
+  // 写入数字值到单个 key
+  async putNumber(key: string, value: number): Promise<void> {
+    await this.kv.put(key, value.toString());
+  }
 }
